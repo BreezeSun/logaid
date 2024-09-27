@@ -13,10 +13,11 @@ pip install logaid
 from logaid import log
 
 log.info('hello world')
-log.warning('hello world')
 log.error('hello world')
+log.warning('hello world')
 log.fatal('hello world',123,{},[],False)
 ```
+![image](screenshot-20240927-175011.png)
 ### open super print
 ```
 from logaid import log
