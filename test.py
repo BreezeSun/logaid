@@ -1,6 +1,11 @@
 from logaid import log
 
-log.info('hello world')
-log.error('hello world')
-log.warning('hello world')
-log.fatal('hello world',123,{},[],False)
+color = {
+    'DEBUG':'gray',
+    'INFO':'green',
+    'WARNING':'yellow',
+    'ERROR':'red',
+    'FATAL':'violet',
+}
+log.init(color=color)
+
