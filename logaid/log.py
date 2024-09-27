@@ -29,7 +29,7 @@ def put_colour(txt, color=None):
 
 
 
-def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,color=None):
+def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,color={}):
     def wrapper(*args, **kwargs):
         [logging.root.removeHandler(handler) or handler.close() for handler in logging.root.handlers[:]]
         frame = inspect.currentframe().f_back
@@ -53,29 +53,29 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
                 format_txt = f'File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
 
         if func.__name__ == 'debug':
-            color = 'gray'
-            format_txt = put_colour(format_txt,color=color)
-            args = (' '.join([put_colour(str(i),color=color) if not filename else str(i) for i in args ]),)
+            color_txt = color.get('DEBUG','') or 'gray'
+            format_txt = put_colour(format_txt,color=color_txt)
+            args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args ]),)
         elif func.__name__ == 'info':
-            color = 'cyan'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('INFO','') or 'cyan'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'warning':
-            color = 'yellow'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('WARNING','') or color.get('WARN','') or 'yellow'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'error':
-            color = 'red'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('ERROR','') or 'red'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ in ['fatal','critical']:
-            color = 'violet'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('FATAL','') or color.get('CRITICAL','') or 'violet'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         else:
-            color = None
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = None
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
 
 
         logging.basicConfig(level=level,

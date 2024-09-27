@@ -29,7 +29,7 @@ def put_colour(txt, color=None):
 
 
 
-def add_context_info(func,level=logging.INFO,filename=False,format='',show=True):
+def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,color={}):
     def wrapper(*args, **kwargs):
         [logging.root.removeHandler(handler) or handler.close() for handler in logging.root.handlers[:]]
         frame = inspect.currentframe().f_back
@@ -53,29 +53,29 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True)
                 format_txt = f'File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
 
         if func.__name__ == 'debug':
-            color = 'gray'
-            format_txt = put_colour(format_txt,color=color)
-            args = (' '.join([put_colour(str(i),color=color) if not filename else str(i) for i in args ]),)
+            color_txt = color.get('DEBUG','') or 'gray'
+            format_txt = put_colour(format_txt,color=color_txt)
+            args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args ]),)
         elif func.__name__ == 'info':
-            color = 'cyan'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('INFO','') or 'cyan'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'warning':
-            color = 'yellow'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('WARNING','') or color.get('WARN','') or 'yellow'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'error':
-            color = 'red'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('ERROR','') or 'red'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ in ['fatal','critical']:
-            color = 'violet'
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = color.get('FATAL','') or color.get('CRITICAL','') or 'violet'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         else:
-            color = None
-            format_txt = put_colour(format_txt, color=color)
-            args = (' '.join([put_colour(str(i), color=color) if not filename else str(i) for i in args]),)
+            color_txt = None
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
 
 
         logging.basicConfig(level=level,
@@ -93,7 +93,7 @@ fatal = add_context_info(logging.fatal)
 critical = add_context_info(logging.critical)
 
 
-def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro=False):
+def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro=False,color=None):
     global debug,info,warning,error,fatal
     if level == 'DEBUG':
         log_level = logging.DEBUG
@@ -117,11 +117,11 @@ def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro
             os.makedirs(path)
         filename = strftime("logs\my_log_%Y_%m_%d_%H.log")
 
-    debug = add_context_info(logging.debug, log_level,filename,format,show)
-    info = add_context_info(logging.info, log_level,filename,format,show)
-    warning = add_context_info(logging.warning, log_level,filename,format,show)
-    error = add_context_info(logging.error, log_level,filename,format,show)
-    fatal = add_context_info(logging.fatal, log_level,filename,format,show)
+    debug = add_context_info(logging.debug, log_level,filename,format,show,color)
+    info = add_context_info(logging.info, log_level,filename,format,show,color)
+    warning = add_context_info(logging.warning, log_level,filename,format,show,color)
+    error = add_context_info(logging.error, log_level,filename,format,show,color)
+    fatal = add_context_info(logging.fatal, log_level,filename,format,show,color)
     if print_pro:
-        builtins.print = add_context_info(logging.info)
+        builtins.print = info
 
