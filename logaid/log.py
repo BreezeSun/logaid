@@ -36,7 +36,13 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
         func_name = frame.f_code.co_name
         if func_name == '<module>':
             func_name = 'None'
-        co_filename = frame.f_code.co_filename.split('\\')[-1]
+
+        co_filename = frame.f_code.co_filename
+        if '\\' in co_filename:
+            co_filename = co_filename.split('\\')[-1]
+        elif '/' in co_filename:
+            co_filename = co_filename.split('/')[-1]
+
         lineno = frame.f_lineno
         handler_list =[]
         if filename:
