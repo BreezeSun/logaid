@@ -25,6 +25,7 @@ log.init(print_pro=True)
 
 print("Hello World")
 ```
+![image](static/screenshot-20240929-103230.png)
 ### auto_save
 ```python
 from logaid import log
