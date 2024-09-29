@@ -13,8 +13,8 @@ pip install logaid
 from logaid import log
 
 log.info('hello world')
-log.error('hello world')
 log.warning('hello world')
+log.error('hello world')
 log.fatal('hello world',123,{},[],False)
 ```
 ![image](static/screenshot-20240927-175011.png)
@@ -48,3 +48,23 @@ log.init(level='INFO',format='%(asctime)s %(levelname)s %(pathname)s %(lineno)d:
 log.info('hello world')
 
 ```
+![image](static/screenshot-20240929-152333.png)
+### define color
+```python
+from logaid import log
+color = {
+    'DEBUG':'gray',
+    'INFO':'green',
+    'WARNING':'yellow',
+    'ERROR':'red',
+    'FATAL':'violet',
+}
+log.init(level='DEBUG',color=color)
+
+log.debug('hello world')
+log.info('hello world')
+log.warning('hello world')
+log.error('hello world')
+log.fatal('hello world',123,{},[],False)
+```
+![image](static/screenshot-20240929-153019.png)
