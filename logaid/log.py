@@ -93,7 +93,7 @@ fatal = add_context_info(logging.fatal)
 critical = add_context_info(logging.critical)
 
 
-def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro=False,color=None):
+def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro=False,color={}):
     global debug,info,warning,error,fatal
     if level == 'DEBUG':
         log_level = logging.DEBUG

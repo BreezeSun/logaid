@@ -17,7 +17,7 @@ log.error('hello world')
 log.warning('hello world')
 log.fatal('hello world',123,{},[],False)
 ```
-![image](screenshot-20240927-175011.png)
+![image](static/screenshot-20240927-175011.png)
 ### open super print
 ```python
 from logaid import log
