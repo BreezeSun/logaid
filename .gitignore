@@ -6,7 +6,11 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-.idea/
+.idea/inspectionProfiles/
+.idea/logaid.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
 build/
 dist/
 logaid.egg-info/
