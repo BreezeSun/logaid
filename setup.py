@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
       name='logaid',  # 包的名称
-      version='1.2.0',  # 包的版本号
+      version='1.2.1',  # 包的版本号
       author='BreezeSun',  # 作者姓名
       description='A log aid for you.',
       packages=find_packages(),

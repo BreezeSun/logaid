@@ -100,7 +100,7 @@ critical = add_context_info(logging.critical)
 
 
 def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro=False,color={}):
-    global debug,info,warning,error,fatal
+    global debug,info,warning,error,fatal,critical
     if level == 'DEBUG':
         log_level = logging.DEBUG
     elif level == 'INFO':
@@ -128,6 +128,7 @@ def init(level='INFO',filename=False,save=False,format=False,show=True,print_pro
     warning = add_context_info(logging.warning, log_level,filename,format,show,color)
     error = add_context_info(logging.error, log_level,filename,format,show,color)
     fatal = add_context_info(logging.fatal, log_level,filename,format,show,color)
+    critical = add_context_info(logging.critical, log_level,filename,format,show,color)
     if print_pro:
         builtins.print = info
 
