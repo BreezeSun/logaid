@@ -17,6 +17,15 @@ log.warning('hello world')
 log.error('hello world')
 log.fatal('hello world',123,{},[],False)
 ```
+#### or
+```python
+import logaid
+
+logaid.info('hello world')
+logaid.warning('hello world')
+logaid.error('hello world')
+logaid.fatal('hello world',123,{},[],False)
+```
 ![image](static/screenshot-20240927-175011.png)
 ### open super print
 ```python
