@@ -1,15 +1,6 @@
-from logaid import log
-color = {
-    'DEBUG':'gray',
-    'INFO':'green',
-    'WARNING':'yellow',
-    'ERROR':'red',
-    'FATAL':'violet',
-}
-log.init(level='DEBUG',color=color)
+import logaid
 
-log.debug('hello world')
-log.info('hello world')
-log.warning('hello world')
-log.error('hello world')
-log.fatal('hello world',123,{},[],False)
+logaid.info('hello world')
+logaid.warning('hello world')
+logaid.error('hello world')
+logaid.fatal('hello world',123,{},[],False)
