@@ -1,16 +1,13 @@
 # Default ignored files
 /shelf/
+logaid/__pycache__
 /workspace.xml
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-.idea/inspectionProfiles/
-.idea/logaid.iml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
+.idea/
 build/
 dist/
 logaid.egg-info/

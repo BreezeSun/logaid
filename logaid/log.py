@@ -49,6 +49,8 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             handler_list.append(logging.FileHandler(filename,encoding='utf-8'))
         if show:
             handler_list.append(logging.StreamHandler())
+        if not any([filename,show]):
+            logging.disable(logging.CRITICAL)
 
         if format:
             format_txt = format.replace('%(pathname)s', str(frame.f_code.co_filename)).replace('%(funcName)s', str(func_name)).replace('%(lineno)d', str(lineno))
