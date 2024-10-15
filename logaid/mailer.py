@@ -25,16 +25,3 @@ class Mail:
             return True,'success'
         except Exception as e:
             return False,e
-
-
-if __name__ == '__main__':
-    email = {
-        'host': 'smtp.qq.com',
-        'token': 'skyfhpajuwjtcjhb',
-        'nickname':'CSDN',
-        'sender': '1774479405@qq.com',
-        'receivers': ['python1966@qq.com'],
-        'subject': 'LogAid Notice'
-    }
-    mail = Mail(email)
-    mail.send('LogAid test.\n\n\n\n123456719')
