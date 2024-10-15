@@ -1,6 +1,6 @@
-import logaid
+from logaid import log
 
-logaid.info('hello world')
-logaid.warning('hello world')
-logaid.error('hello world')
-logaid.fatal('hello world',123,{},[],False)
+log.info('hello world')
+log.warning('hello world')
+log.error('hello world')
+log.fatal('hello world',123,{},[],False)
