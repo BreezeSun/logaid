@@ -1,42 +1,27 @@
 import smtplib
 from email.mime.text import MIMEText
-from email.header import Header
-import base64
 
 class Mail:
-    def __init__(self,host,token,sender,receivers):
-        self.host = host
-        self.token = token
-        self.sender = sender
-        self.receivers = receivers
+    def __init__(self, email):
+        self.host = email['host']
+        self.token = email['token']
+        self.sender = email['sender']
+        self.nickname = email['nickname']
+        self.receivers = email['receivers']
+        self.subject = email['subject']
 
-    def send(self,subject, content):
+    def send(self,content):
         content = str(content)
         message = MIMEText(content, 'plain', 'utf-8')
-        message["From"] = self.sender
-        message["To"] = "LogAid Notice"
-        message["Subject"] = subject
+        message["From"] = f"{self.nickname} <{self.sender}>"
+        message["To"] = ""
+        message["Subject"] = self.subject
 
-        if 'qq.com' in self.host:
-            message['From'] = Header(
-                f'=?utf-8?B?{base64.b64encode("LogAid Notice".encode()).decode()}=?= <{self.sender}>')
-            message['To'] = Header("LogAid Notice", 'utf-8')
-            message['Subject'] = Header(subject, 'utf-8')
         try:
-            smtpObj = smtplib.SMTP_SSL(self.host, 465)
+            smtpObj = smtplib.SMTP_SSL(self.host, 465, timeout=3)
             smtpObj.login(self.sender, self.token)
             smtpObj.sendmail(self.sender, self.receivers, message.as_string())
             smtpObj.quit()
+            return True,'success'
         except Exception as e:
-            raise e
-
-if __name__ == '__main__':
-    mail = Mail()
-    mail.send('subject','test')
-    email = {
-        'host': 'smtp.qq.com',
-        'token': 'xxxxxx',
-        'sender': 'xxxxx@qq.com',
-        'receivers': ['xxxxx@qq.com'],
-        'subject': 'LogAid Notice'
-    }
+            return False,e

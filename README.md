@@ -45,7 +45,7 @@ log.info('hello world')
 ### save as filename and not print
 ```python
 from logaid import log
-log.init(level='DEBUG',filename='cs.log',show=False)
+log.init(level='DEBUG',filename='test.log',show=False)
 
 log.info('hello world')
 ```
@@ -77,3 +77,19 @@ log.error('hello world')
 log.fatal('hello world',123,{},[],False)
 ```
 ![image](static/screenshot-20240929-153019.png)
+### send email
+```python
+from logaid import log
+mailer = {
+        'host': 'smtp.qq.com',
+        'token': 'xxxxxxxxxxxx',
+        'nickname':'LogAid',
+        'sender': 'xxxxxx@qq.com',
+        'receivers': ['xxxxxx@qq.com'],
+        'subject': 'A log aid for you.'
+    }
+log.init(level='ERROR',mailer=mailer)
+
+log.error('Exec appear error.')
+log.email('Send email tip.')
+```
