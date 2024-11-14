@@ -62,8 +62,7 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             else:
                 format_txt = f'File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
 
-
-        func_dict = {'debug':10,'info':20,'warning':30,'error':40,'fatal':50,'critical':50}
+        func_dict = {'warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
         if func.__name__ == 'debug':
             color_txt = color.get('DEBUG','') or 'gray'
             format_txt = put_colour(format_txt,color=color_txt)
@@ -90,14 +89,15 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
 
         if emailer:
-            if func_dict.get(func.__name__,0) >= level:
+            if func_dict.get(func.__name__,'') in emailer.get('open_level',[]):
                 emailer_dict = dict(emailer)
                 emailer_dict['subject'] = f'[{func.__name__}] ' + emailer_dict['subject']
                 e_mailer = Mail(emailer_dict)
                 err_bool, err_txt = e_mailer.send(args[0][5:-4])
                 if not err_bool:
                     args = (args[0] + ' [ERROR] Send LogAid mail failed. ' + str(err_txt),)
-
+                else:
+                    args = (args[0] + ' [email]',)
 
         logging.basicConfig(level=level,
                                     format=format_txt,

@@ -81,12 +81,13 @@ log.fatal('hello world',123,{},[],False)
 ```python
 from logaid import log
 mailer = {
-        'host': 'smtp.qq.com',
-        'token': 'xxxxxxxxxxxx',
-        'nickname':'LogAid',
+        'host': 'smtp.qq.com',      
+        'token': 'xxxxxxxxxxxx',    # IMAP/SMTP code
+        'nickname':'LogAid',    
         'sender': 'xxxxxx@qq.com',
         'receivers': ['xxxxxx@qq.com'],
-        'subject': 'A log aid for you.'
+        'subject': 'A log aid for you.',
+        'open_level': ['ERROR','FATAL']   # More than WARNING valid.
     }
 log.init(level='ERROR',mailer=mailer)
 
