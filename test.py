@@ -1,5 +1,6 @@
 from logaid import log
 
+log.debug('hello world')
 log.info('hello world')
 log.warning('hello world')
 log.error('hello world')

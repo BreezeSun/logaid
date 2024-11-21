@@ -6,6 +6,7 @@ from time import strftime
 import builtins
 from logaid.mailer import Mail
 
+
 email_usable = False
 
 def put_colour(txt, color=None):
@@ -102,8 +103,22 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
         logging.basicConfig(level=level,
                                     format=format_txt,
                                     handlers=handler_list)
-
-        return func(*args, **kwargs)
+        aid_logger = logging.getLogger(__name__)
+        if func.__name__ == 'debug':
+            aid_func = aid_logger.debug
+        elif func.__name__ == 'info':
+            aid_func = aid_logger.info
+        elif func.__name__ == 'warning':
+            aid_func = aid_logger.warning
+        elif func.__name__ == 'error':
+            aid_func = aid_logger.error
+        elif func.__name__ == 'fatal':
+            aid_func = aid_logger.fatal
+        elif func.__name__ == 'critical':
+            aid_func = aid_logger.critical
+        else:
+            aid_func = func
+        return aid_func(*args, **kwargs)
     return wrapper
 
 debug = add_context_info(logging.debug)
