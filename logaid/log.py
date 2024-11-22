@@ -47,7 +47,7 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             co_filename = co_filename.split('/')[-1]
 
         lineno = frame.f_lineno
-        handler_list =[]
+        handler_list = []
         if filename:
             handler_list.append(logging.FileHandler(filename,encoding='utf-8'))
         if show:
@@ -67,7 +67,7 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
         if func.__name__ == 'debug':
             color_txt = color.get('DEBUG','') or 'gray'
             format_txt = put_colour(format_txt,color=color_txt)
-            args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args ]),)
+            args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'info':
             color_txt = color.get('INFO','') or 'cyan'
             format_txt = put_colour(format_txt, color=color_txt)
@@ -100,10 +100,19 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
                 else:
                     args = (args[0] + ' [email]',)
 
-        logging.basicConfig(level=level,
-                                    format=format_txt,
-                                    handlers=handler_list)
-        aid_logger = logging.getLogger(__name__)
+        aid_logger = logging.getLogger()
+        aid_logger.setLevel(level)
+        if show:
+            formatter = logging.Formatter(format_txt)
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            aid_logger.addHandler(console_handler)
+        if filename:
+            formatter = logging.Formatter(format_txt[5:-4])
+            file_handler = logging.FileHandler(filename,encoding='utf-8')
+            file_handler.setFormatter(formatter)
+            aid_logger.addHandler(file_handler)
+
         if func.__name__ == 'debug':
             aid_func = aid_logger.debug
         elif func.__name__ == 'info':
