@@ -1,11 +1,9 @@
 import logging
-import logging.handlers
 import inspect
 import os
 from time import strftime
 import builtins
 from logaid.mailer import Mail
-
 
 email_usable = False
 
@@ -34,7 +32,6 @@ def put_colour(txt, color=None):
 
 def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,color={},emailer={}):
     def wrapper(*args, **kwargs):
-        [logging.root.removeHandler(handler) or handler.close() for handler in logging.root.handlers[:]]
         frame = inspect.currentframe().f_back
         func_name = frame.f_code.co_name
         if func_name == '<module>':
@@ -45,15 +42,7 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             co_filename = co_filename.split('\\')[-1]
         elif '/' in co_filename:
             co_filename = co_filename.split('/')[-1]
-
         lineno = frame.f_lineno
-        handler_list = []
-        if filename:
-            handler_list.append(logging.FileHandler(filename,encoding='utf-8'))
-        if show:
-            handler_list.append(logging.StreamHandler())
-        if not any([filename,show]):
-            logging.disable(logging.CRITICAL)
 
         if format:
             format_txt = format.replace('%(pathname)s', str(frame.f_code.co_filename)).replace('%(funcName)s', str(func_name)).replace('%(lineno)d', str(lineno))
@@ -100,18 +89,19 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
                 else:
                     args = (args[0] + ' [email]',)
 
-        aid_logger = logging.getLogger()
+        aid_logger = logging.getLogger(func.__name__)
         aid_logger.setLevel(level)
-        if show:
-            formatter = logging.Formatter(format_txt)
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(formatter)
-            aid_logger.addHandler(console_handler)
-        if filename:
-            formatter = logging.Formatter(format_txt[5:-4])
-            file_handler = logging.FileHandler(filename,encoding='utf-8')
-            file_handler.setFormatter(formatter)
-            aid_logger.addHandler(file_handler)
+        if not aid_logger.hasHandlers():
+            if show:
+                formatter = logging.Formatter(format_txt)
+                console_handler = logging.StreamHandler()
+                console_handler.setFormatter(formatter)
+                aid_logger.addHandler(console_handler)
+            if filename:
+                formatter = logging.Formatter(format_txt[5:-4])
+                file_handler = logging.FileHandler(filename,encoding='utf-8')
+                file_handler.setFormatter(formatter)
+                aid_logger.addHandler(file_handler)
 
         if func.__name__ == 'debug':
             aid_func = aid_logger.debug
