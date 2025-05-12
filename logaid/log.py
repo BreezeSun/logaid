@@ -151,10 +151,10 @@ def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=Fa
     else:
         log_level = logging.INFO
     if save:
-        path = os.path.dirname(os.getcwd() + '\\logs\\')  # 判断日志目录
-        if not os.path.exists(path):
-            os.makedirs(path)
-        filename = strftime("logs\my_log_%Y_%m_%d_%H.log")
+        log_dir = os.path.join("logs")
+        os.makedirs(log_dir, exist_ok=True)
+        filepath = strftime("my_log_%Y_%m_%d_%H.log")
+        filename = os.path.join(log_dir, filepath)
 
     emailer_copy = dict(mailer)
 
