@@ -30,7 +30,7 @@ def put_colour(txt, color=None):
 
 
 
-def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,color={},emailer={}):
+def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,only_msg=False,color={},emailer={}):
     def wrapper(*args, **kwargs):
         frame = inspect.currentframe().f_back
         func_name = frame.f_code.co_name
@@ -50,7 +50,10 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             if filename:
                 format_txt = f'File "{co_filename}", line {lineno}, time %(asctime)s, func {func_name}, level %(levelname)s: %(message)s'
             else:
-                format_txt = f'File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
+                if only_msg:
+                    format_txt = f'%(message)s'
+                else:
+                    format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
 
         func_dict = {'warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
         if func.__name__ == 'debug':
@@ -132,7 +135,20 @@ def email(*args):
         error(*args, ' [ERROR] mail func not usable,please set init param "email".')
 
 
-def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=False,color={},mailer={}):
+def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=False,only_msg=False,color={},mailer={}):
+    """
+
+    :param level: log level
+    :param filename: filename of save log
+    :param save: if save log
+    :param format: custom log print by you
+    :param show: if print in console
+    :param print_pro: print of python become info
+    :param only_msg: only print message
+    :param color: custom color print by you
+    :param mailer: use mail notify
+    :return:
+    """
     global debug,info,warning,error,fatal,critical,email_usable,email
     if level == 'DEBUG':
         log_level = logging.DEBUG
@@ -158,12 +174,12 @@ def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=Fa
 
     emailer_copy = dict(mailer)
 
-    debug = add_context_info(logging.debug, log_level,filename,format,show,color,emailer_copy)
-    info = add_context_info(logging.info, log_level,filename,format,show,color,emailer_copy)
-    warning = add_context_info(logging.warning, log_level,filename,format,show,color,emailer_copy)
-    error = add_context_info(logging.error, log_level,filename,format,show,color,emailer_copy)
-    fatal = add_context_info(logging.fatal, log_level,filename,format,show,color,emailer_copy)
-    critical = add_context_info(logging.critical, log_level,filename,format,show,color,emailer_copy)
+    debug = add_context_info(logging.debug, log_level,filename,format,show,only_msg,color,emailer_copy)
+    info = add_context_info(logging.info, log_level,filename,format,show,only_msg,color,emailer_copy)
+    warning = add_context_info(logging.warning, log_level,filename,format,only_msg,show,color,emailer_copy)
+    error = add_context_info(logging.error, log_level,filename,format,show,only_msg,color,emailer_copy)
+    fatal = add_context_info(logging.fatal, log_level,filename,format,show,only_msg,color,emailer_copy)
+    critical = add_context_info(logging.critical, log_level,filename,format,show,only_msg,color,emailer_copy)
     if print_pro:
         builtins.print = info
 
