@@ -33,7 +33,7 @@ def put_colour(txt, color=None):
 
 
 def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,only_msg=False,color={},emailer={}):
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, sep=' ', end='\n', file=None, **kwargs):
         frame = inspect.currentframe().f_back
         func_name = frame.f_code.co_name
         if func_name == '<module>':
