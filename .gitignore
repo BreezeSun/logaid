@@ -8,6 +8,6 @@ logaid/__pycache__
 /dataSources/
 /dataSources.local.xml
 .idea/
-build/
-dist/
+/build/
+/dist/
 logaid.egg-info/
