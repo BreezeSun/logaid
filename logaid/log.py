@@ -4,6 +4,8 @@ import os
 from time import strftime
 import builtins
 from logaid.mailer import Mail
+import random
+import string
 
 email_usable = False
 
@@ -92,7 +94,8 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
                 else:
                     args = (args[0] + ' [email]',)
 
-        aid_logger = logging.getLogger(func.__name__)
+        random_str = ''.join(random.choices(string.ascii_letters+string.digits, k=12))
+        aid_logger = logging.getLogger(func.__name__+random_str)
         aid_logger.setLevel(level)
         if not aid_logger.hasHandlers():
             if show:
@@ -106,17 +109,17 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
                 file_handler.setFormatter(formatter)
                 aid_logger.addHandler(file_handler)
 
-        if func.__name__ == 'debug':
+        if 'debug' in func.__name__:
             aid_func = aid_logger.debug
-        elif func.__name__ == 'info':
+        elif 'info' in func.__name__:
             aid_func = aid_logger.info
-        elif func.__name__ == 'warning':
+        elif 'warning' in func.__name__:
             aid_func = aid_logger.warning
-        elif func.__name__ == 'error':
+        elif 'error' in func.__name__:
             aid_func = aid_logger.error
-        elif func.__name__ == 'fatal':
+        elif 'fatal' in func.__name__:
             aid_func = aid_logger.fatal
-        elif func.__name__ == 'critical':
+        elif 'critical' in func.__name__:
             aid_func = aid_logger.critical
         else:
             aid_func = func
@@ -176,7 +179,7 @@ def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=Fa
 
     debug = add_context_info(logging.debug, log_level,filename,format,show,only_msg,color,emailer_copy)
     info = add_context_info(logging.info, log_level,filename,format,show,only_msg,color,emailer_copy)
-    warning = add_context_info(logging.warning, log_level,filename,format,only_msg,show,color,emailer_copy)
+    warning = add_context_info(logging.warning, log_level,filename,format,show,only_msg,color,emailer_copy)
     error = add_context_info(logging.error, log_level,filename,format,show,only_msg,color,emailer_copy)
     fatal = add_context_info(logging.fatal, log_level,filename,format,show,only_msg,color,emailer_copy)
     critical = add_context_info(logging.critical, log_level,filename,format,show,only_msg,color,emailer_copy)
