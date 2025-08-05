@@ -50,7 +50,7 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             format_txt = format.replace('%(pathname)s', str(frame.f_code.co_filename)).replace('%(funcName)s', str(func_name)).replace('%(lineno)d', str(lineno))
         else:
             if filename:
-                format_txt = f'File "{co_filename}", line {lineno}, time %(asctime)s, func {func_name}, level %(levelname)s: %(message)s'
+                format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
             else:
                 if only_msg:
                     format_txt = f'%(message)s'
