@@ -1,7 +1,10 @@
 # LogAid
 
 A log aid for you.
-
+## wait development
+```console
+1. add log.success
+```
 ## Installation
 ```console
 pip install logaid
