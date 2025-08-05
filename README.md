@@ -26,7 +26,9 @@ logaid.warning('hello world')
 logaid.error('hello world')
 logaid.fatal('hello world',123,{},[],False)
 ```
-![image](static/screenshot-20240927-175011.png)
+![image](static/7ba9989c8b132f4b18597423e1a72940.png)
+### click jump into code line
+![image](static/605d39ba4fa031f56f2bc011fa48129b.png)
 ### open super print
 ```python
 from logaid import log

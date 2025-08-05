@@ -1,5 +1,6 @@
 from logaid import log
-log.init(print_pro=True)
 
-print("Hello World")
-
+log.info('hello world')
+log.warning('hello world')
+log.error('hello world')
+log.fatal('hello world',123,{},[],False)
