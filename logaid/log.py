@@ -172,7 +172,7 @@ def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=Fa
     if save:
         log_dir = os.path.join("logs")
         os.makedirs(log_dir, exist_ok=True)
-        filepath = strftime("my_log_%Y_%m_%d_%H_%M_%S.log")
+        filepath = strftime("logaid_%Y_%m_%d_%H_%M_%S.log")
         filename = os.path.join(log_dir, filepath)
 
     emailer_copy = dict(mailer)
