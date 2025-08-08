@@ -33,6 +33,11 @@ def put_colour(txt, color=None):
 
 
 def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True,only_msg=False,color={},emailer={}):
+
+    random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+    aid_logger = logging.getLogger(func.__name__ + random_str)
+    aid_logger.setLevel(level)
+
     def wrapper(*args, sep=' ', end='\n', file=None, **kwargs):
         frame = inspect.currentframe().f_back
         func_name = frame.f_code.co_name
@@ -102,9 +107,7 @@ def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True
                 else:
                     args = (args[0] + ' [email]',)
 
-        random_str = ''.join(random.choices(string.ascii_letters+string.digits, k=12))
-        aid_logger = logging.getLogger(func.__name__+random_str)
-        aid_logger.setLevel(level)
+
         if not aid_logger.hasHandlers():
             if show:
                 formatter = logging.Formatter(format_txt)
