@@ -32,7 +32,7 @@ def put_colour(txt, color=None):
 
 
 
-def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,only_msg=False,color={},emailer={}):
+def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True,only_msg=False,color={},emailer={}):
     def wrapper(*args, sep=' ', end='\n', file=None, **kwargs):
         frame = inspect.currentframe().f_back
         func_name = frame.f_code.co_name
@@ -51,12 +51,16 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
         else:
             if filename:
                 format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
+                if func.__name__ == 'success':
+                    format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level SUCCESS: %(message)s'
+
             else:
                 if only_msg:
                     format_txt = f'%(message)s'
                 else:
                     format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
-
+                    if func.__name__ == 'success':
+                        format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level SUCCESS: %(message)s'
         func_dict = {'warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
         if func.__name__ == 'debug':
             color_txt = color.get('DEBUG','') or 'gray'
@@ -64,6 +68,10 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'info':
             color_txt = color.get('INFO','') or 'cyan'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
+        elif func.__name__ == 'success':
+            color_txt = color.get('SUCCESS','') or 'green'
             format_txt = put_colour(format_txt, color=color_txt)
             args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
         elif func.__name__ == 'warning':
@@ -113,6 +121,8 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
             aid_func = aid_logger.debug
         elif 'info' in func.__name__:
             aid_func = aid_logger.info
+        elif 'success' in func.__name__:
+            aid_func = aid_logger.info
         elif 'warning' in func.__name__:
             aid_func = aid_logger.warning
         elif 'error' in func.__name__:
@@ -126,9 +136,12 @@ def add_context_info(func,level=logging.INFO,filename=False,format='',show=True,
         return aid_func(*args, **kwargs)
     return wrapper
 
+def success(*args,**kwargs):pass
+
 debug = add_context_info(logging.debug)
 info = add_context_info(logging.info)
 warning = add_context_info(logging.warning)
+success = add_context_info(success)
 error = add_context_info(logging.error)
 fatal = add_context_info(logging.fatal)
 critical = add_context_info(logging.critical)
@@ -175,11 +188,14 @@ def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=Fa
         filepath = strftime("logaid_%Y_%m_%d_%H_%M_%S.log")
         filename = os.path.join(log_dir, filepath)
 
+    def success(*args,**kwargs):pass
+
     emailer_copy = dict(mailer)
 
     debug = add_context_info(logging.debug, log_level,filename,format,show,only_msg,color,emailer_copy)
     info = add_context_info(logging.info, log_level,filename,format,show,only_msg,color,emailer_copy)
     warning = add_context_info(logging.warning, log_level,filename,format,show,only_msg,color,emailer_copy)
+    success = add_context_info(success, log_level,filename,format,show,only_msg,color,emailer_copy)
     error = add_context_info(logging.error, log_level,filename,format,show,only_msg,color,emailer_copy)
     fatal = add_context_info(logging.fatal, log_level,filename,format,show,only_msg,color,emailer_copy)
     critical = add_context_info(logging.critical, log_level,filename,format,show,only_msg,color,emailer_copy)
