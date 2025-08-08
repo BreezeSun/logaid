@@ -3,7 +3,8 @@
 A log aid for you.
 ## wait development
 ```console
-1. add log.success
+1. add jsonlogger
+2. add rotation
 ```
 ## Installation
 ```console
