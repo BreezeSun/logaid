@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
       name='logaid',
-      version='1.4.0',
+      version='1.5.0',
       author='BreezeSun',
       description='A log aid for you.',
       packages=find_packages(),

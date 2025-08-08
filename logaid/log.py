@@ -8,6 +8,20 @@ import random
 import string
 
 email_usable = False
+logaid_has_handlers = False
+
+class SafeFormatter(logging.Formatter):
+    def format(self, record):
+        if not hasattr(record, 'fake_lineno'):
+            record.fake_lineno = record.lineno
+        if not hasattr(record, 'fake_pathname'):
+            record.fake_pathname = record.pathname
+        if not hasattr(record, 'fake_funcName'):
+            record.fake_funcName = record.funcName
+        if not hasattr(record, 'fake_levelname'):
+            record.fake_levelname = record.levelname
+        return super().format(record)
+
 
 def put_colour(txt, color=None):
     if color == 'red':
@@ -26,19 +40,40 @@ def put_colour(txt, color=None):
         result = f"\033[37m{txt}\033[0m"
     elif color == 'black':
         result = f"\033[30m{txt}\033[0m"
+    elif color == 'default':
+        result = f"\033[2m{txt}\033[0m"
     else:
         result = txt
     return result
 
 
 
-def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True,only_msg=False,color={},emailer={}):
+def add_context_info(func,name='',level=logging.DEBUG,filename=False,save_mode='a',format='',show=True,only_msg=False,color={},emailer={}):
+    global logaid_has_handlers
 
     random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-    aid_logger = logging.getLogger(func.__name__ + random_str)
+    logger_name = name or func.__name__ + random_str
+    aid_logger = logging.getLogger(logger_name)
+    aid_logger.propagate = False
     aid_logger.setLevel(level)
+    if aid_logger.hasHandlers() and not logaid_has_handlers:
+        logaid_has_handlers = True
+        aid_logger.handlers.clear()
+        format_txt = '[%(asctime)s] File "%(fake_pathname)s", line %(fake_lineno)d, func %(fake_funcName)s, level %(fake_levelname)s: %(message)s'
+        format_txt = put_colour(format_txt, color='default')
+        if filename:
+            formatter = SafeFormatter(format_txt[5:-4])
+            file_handler = logging.FileHandler(filename,save_mode, encoding='utf-8')
+            file_handler.setFormatter(formatter)
+            aid_logger.addHandler(file_handler)
+        if show:
+            formatter = SafeFormatter(format_txt)
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            aid_logger.addHandler(console_handler)
 
     def wrapper(*args, sep=' ', end='\n', file=None, **kwargs):
+        global logaid_has_handlers
         frame = inspect.currentframe().f_back
         func_name = frame.f_code.co_name
         if func_name == '<module>':
@@ -51,23 +86,20 @@ def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True
             co_filename = co_filename.split('/')[-1]
         lineno = frame.f_lineno
 
+
         if format:
             format_txt = format.replace('%(pathname)s', str(frame.f_code.co_filename)).replace('%(funcName)s', str(func_name)).replace('%(lineno)d', str(lineno))
         else:
-            if filename:
-                format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
-                if func.__name__ == 'success':
-                    format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level SUCCESS: %(message)s'
+            format_txt = f'[%(asctime)s] File "%(fake_pathname)s", line %(fake_lineno)d, func %(fake_funcName)s, level %(fake_levelname)s: %(message)s'
+            if only_msg:
+                format_txt = f'%(message)s'
 
-            else:
-                if only_msg:
-                    format_txt = f'%(message)s'
-                else:
-                    format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level %(levelname)s: %(message)s'
-                    if func.__name__ == 'success':
-                        format_txt = f'[%(asctime)s] File "{co_filename}", line {lineno}, func {func_name}, level SUCCESS: %(message)s'
-        func_dict = {'warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
-        if func.__name__ == 'debug':
+        func_dict = {'success':'SUCCESS','warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
+        if name:
+            color_txt = 'default'
+            format_txt = put_colour(format_txt, color=color_txt)
+            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
+        elif func.__name__ == 'debug':
             color_txt = color.get('DEBUG','') or 'gray'
             format_txt = put_colour(format_txt,color=color_txt)
             args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args]),)
@@ -106,17 +138,16 @@ def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True
                     args = (args[0] + ' [ERROR] Send LogAid mail failed. ' + str(err_txt),)
                 else:
                     args = (args[0] + ' [email]',)
-
-
-        if not aid_logger.hasHandlers():
+        if not aid_logger.hasHandlers() or not logaid_has_handlers:
+            logaid_has_handlers = True
             if show:
-                formatter = logging.Formatter(format_txt)
+                formatter = SafeFormatter(format_txt)
                 console_handler = logging.StreamHandler()
                 console_handler.setFormatter(formatter)
                 aid_logger.addHandler(console_handler)
             if filename:
-                formatter = logging.Formatter(format_txt[5:-4])
-                file_handler = logging.FileHandler(filename,encoding='utf-8')
+                formatter = SafeFormatter(format_txt[5:-4])
+                file_handler = logging.FileHandler(filename,save_mode,encoding='utf-8')
                 file_handler.setFormatter(formatter)
                 aid_logger.addHandler(file_handler)
 
@@ -139,7 +170,11 @@ def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True
             aid_func = aid_logger.critical
         else:
             aid_func = func
-        return aid_func(*args, **kwargs)
+        extra = {"fake_lineno": lineno, "fake_funcName": func_name, "fake_pathname": co_filename}
+        if 'success' in func.__name__:
+            extra.update({'fake_levelname':'SUCCESS'})
+
+        return aid_func(*args,extra=extra, **kwargs)
     return wrapper
 
 def success(*args,**kwargs):pass
@@ -157,13 +192,15 @@ def email(*args):
         error(*args, ' [ERROR] mail func not usable,please set init param "email".')
 
 
-def init(level='DEBUG',filename=False,save=False,format='',show=True,print_pro=False,only_msg=False,color={},mailer={}):
+def init(name='',level='DEBUG',filename=False,save=False,save_mode='a',format='',show=True,print_pro=False,only_msg=False,color={},mailer={}):
     global success
     """
-
+    
+    :param name: log space name (attention:use it color will vanish)
     :param level: log level
     :param filename: filename of save log
     :param save: if save log
+    :param save_mode: write log file type. example: a/a+/w/w+
     :param format: custom log print by you
     :param show: if print in console
     :param print_pro: print of python become info
@@ -201,13 +238,13 @@ def init(level='DEBUG',filename=False,save=False,format='',show=True,print_pro=F
 
     emailer_copy = dict(mailer)
 
-    debug = add_context_info(logging.debug, log_level,filename,format,show,only_msg,color,emailer_copy)
-    info = add_context_info(logging.info, log_level,filename,format,show,only_msg,color,emailer_copy)
-    warning = add_context_info(logging.warning, log_level,filename,format,show,only_msg,color,emailer_copy)
-    success = add_context_info(success, log_level,filename,format,show,only_msg,color,emailer_copy)
-    error = add_context_info(logging.error, log_level,filename,format,show,only_msg,color,emailer_copy)
-    fatal = add_context_info(logging.fatal, log_level,filename,format,show,only_msg,color,emailer_copy)
-    critical = add_context_info(logging.critical, log_level,filename,format,show,only_msg,color,emailer_copy)
+    debug = add_context_info(logging.debug,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    info = add_context_info(logging.info,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    warning = add_context_info(logging.warning,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    success = add_context_info(success,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    error = add_context_info(logging.error,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    fatal = add_context_info(logging.fatal,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    critical = add_context_info(logging.critical,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
     if print_pro:
         builtins.print = info
 
