@@ -117,6 +117,9 @@ def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True
                 file_handler.setFormatter(formatter)
                 aid_logger.addHandler(file_handler)
 
+            if not any([show,filename]):
+                return
+
         if 'debug' in func.__name__:
             aid_func = aid_logger.debug
         elif 'info' in func.__name__:
@@ -151,7 +154,8 @@ def email(*args):
         error(*args, ' [ERROR] mail func not usable,please set init param "email".')
 
 
-def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=False,only_msg=False,color={},mailer={}):
+def init(level='DEBUG',filename=False,save=False,format='',show=True,print_pro=False,only_msg=False,color={},mailer={}):
+    global success
     """
 
     :param level: log level
@@ -169,6 +173,8 @@ def init(level='INFO',filename=False,save=False,format='',show=True,print_pro=Fa
     if level == 'DEBUG':
         log_level = logging.DEBUG
     elif level == 'INFO':
+        log_level = logging.INFO
+    elif level == 'SUCCESS':
         log_level = logging.INFO
     elif level == 'WARN':
         log_level = logging.WARN
