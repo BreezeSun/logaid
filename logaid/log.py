@@ -128,7 +128,7 @@ def add_context_info(func,level=logging.DEBUG,filename=False,format='',show=True
         elif 'info' in func.__name__:
             aid_func = aid_logger.info
         elif 'success' in func.__name__:
-            aid_func = aid_logger.info
+            aid_func = aid_logger.warning
         elif 'warning' in func.__name__:
             aid_func = aid_logger.warning
         elif 'error' in func.__name__:
@@ -178,7 +178,7 @@ def init(level='DEBUG',filename=False,save=False,format='',show=True,print_pro=F
     elif level == 'INFO':
         log_level = logging.INFO
     elif level == 'SUCCESS':
-        log_level = logging.INFO
+        log_level = 25
     elif level == 'WARN':
         log_level = logging.WARN
     elif level == 'WARNING':
