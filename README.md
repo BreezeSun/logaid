@@ -1,10 +1,16 @@
 # LogAid
+<p align="left">
+    <a href="https://pypi.python.org/pypi/logaid"><img alt="Pypi version" src="https://img.shields.io/pypi/v/logaid.svg"></a>
+    <a href="https://pypi.python.org/pypi/logaid"><img alt="Python versions" src="https://img.shields.io/badge/python-3.0%2B%20%7C%20PyPy-blue.svg"></a>
+    <a href="https://github.com/BreezeSun/logaid/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/BreezeSun/logaid.svg"></a>
+</p>
 
 **LogAid** is a Python library designed to make logging enjoyable.
 
 Have you ever felt too lazy to configure a proper logger and just defaulted to using print()? I know I have. But logging is crucial for any application and really simplifies debugging. With **LogAid**, you’ve got no excuse not to log from the start—it’s as easy as from logaid import logger.
 
 This library aims to ease the pain of Python logging by offering a range of helpful features that address the common pitfalls of standard loggers. Logging in your app should be second nature, and **LogAid** strives to make that process both easy and powerful.
+______________________________________________________________________
 ## wait development
 ```console
 1. add jsonlogger
