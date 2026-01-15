@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import TimedRotatingFileHandler,RotatingFileHandler
 import inspect
 import os
 from time import strftime
@@ -48,7 +49,9 @@ def put_colour(txt, color=None):
 
 
 
-def add_context_info(func,name='',level=logging.DEBUG,filename=False,save_mode='a',format='',show=True,only_msg=False,color={},emailer={}):
+def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode='a',format=''
+                     ,show=True,only_msg=False,color={},emailer={}
+                     ,rotating:str='',backupCount:int=30,maxBytes:int=50 * 1024 * 1024):
     global logaid_has_handlers
 
     random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
@@ -63,7 +66,36 @@ def add_context_info(func,name='',level=logging.DEBUG,filename=False,save_mode='
         format_txt = put_colour(format_txt, color='default')
         if filename:
             formatter = SafeFormatter(format_txt[5:-4])
-            file_handler = logging.FileHandler(filename,save_mode, encoding='utf-8')
+            if rotating == 'day':
+                file_handler = TimedRotatingFileHandler(
+                    filename=filename,
+                    when="midnight",
+                    interval=1,
+                    backupCount=backupCount,
+                    encoding="utf-8"
+                )
+                file_handler.suffix = "%Y-%m-%d.log"
+            elif rotating == 'size':
+                file_handler = RotatingFileHandler(
+                    filename=filename,
+                    mode=save_mode,
+                    maxBytes=maxBytes,
+                    backupCount=backupCount,
+                    encoding="utf-8"
+                )
+            elif rotating == 'day-size':
+                file_handler = TimedRotatingFileHandler(
+                    filename=filename,
+                    when="midnight",
+                    interval=1,
+                    backupCount=backupCount,
+                    encoding="utf-8"
+                )
+                file_handler.suffix = "%Y-%m-%d.log"
+                file_handler.maxBytes = maxBytes
+            else:
+                file_handler = logging.FileHandler(filename,save_mode, encoding='utf-8')
+
             file_handler.setFormatter(formatter)
             aid_logger.addHandler(file_handler)
         if show:
@@ -192,7 +224,9 @@ def email(*args):
         error(*args, ' [ERROR] mail func not usable,please set init param "email".')
 
 
-def init(name='',level='DEBUG',filename=False,save=False,save_mode='a',format='',show=True,print_pro=False,only_msg=False,color={},mailer={}):
+def init(name:str='',level:str='DEBUG',filename:str='',save=False,save_mode:str='a',
+         format:str='',show=True,print_pro=False,only_msg=False,color:dict={},mailer:dict={}
+         ,rotating:str='',backupCount:int=30,maxBytes:int=50 * 1024 * 1024):
     global success
     """
     
@@ -207,6 +241,9 @@ def init(name='',level='DEBUG',filename=False,save=False,save_mode='a',format=''
     :param only_msg: only print message
     :param color: custom color print by you
     :param mailer: use mail notify
+    :param rotating: `day` or `size` Cut logs by day or by size,Default 0-point cutting or 50MB cutting
+    :param backupCount: by default, 30 sets of data are saved
+    :param maxBytes: The cutting size in the cutting mode，Default 50MB
     :return:
     """
     global debug,info,warning,error,fatal,critical,email_usable,email
@@ -238,13 +275,13 @@ def init(name='',level='DEBUG',filename=False,save=False,save_mode='a',format=''
 
     emailer_copy = dict(mailer)
 
-    debug = add_context_info(logging.debug,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
-    info = add_context_info(logging.info,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
-    warning = add_context_info(logging.warning,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
-    success = add_context_info(success,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
-    error = add_context_info(logging.error,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
-    fatal = add_context_info(logging.fatal,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
-    critical = add_context_info(logging.critical,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy)
+    debug = add_context_info(logging.debug,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    info = add_context_info(logging.info,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    warning = add_context_info(logging.warning,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    success = add_context_info(success,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    error = add_context_info(logging.error,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    fatal = add_context_info(logging.fatal,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    critical = add_context_info(logging.critical,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
     if print_pro:
         builtins.print = info
 

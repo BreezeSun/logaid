@@ -14,7 +14,6 @@ ______________________________________________________________________
 ## wait development
 ```console
 1. add jsonlogger
-2. add rotation
 ```
 ## Installation
 ```console
@@ -75,6 +74,13 @@ log.init(level='INFO',format='%(asctime)s %(levelname)s %(pathname)s %(lineno)d:
 log.info('hello world')
 
 ```
+### Split the log files by day
+```python
+from logaid import log
+log.init(filename='test.log',rotating='day')
+log.info('hello world')
+```
+
 ![image](static/screenshot-20240929-152333.png)
 ### define color
 ```python
