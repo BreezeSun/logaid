@@ -1,5 +1,5 @@
 from logaid import log
-log.init(rotating=)
+
 log.debug('hello world')
 log.info('hello world')
 log.warning('hello world')
