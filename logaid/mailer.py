@@ -2,7 +2,14 @@ import smtplib
 from email.mime.text import MIMEText
 
 class Mail:
+    REQUIRED_FIELDS = ("host", "token", "sender", "nickname", "receivers", "subject")
+
     def __init__(self, email):
+        if not isinstance(email, dict):
+            raise TypeError('mailer config must be a dict.')
+        missing_fields = [field for field in self.REQUIRED_FIELDS if field not in email]
+        if missing_fields:
+            raise ValueError(f'mailer config missing fields: {", ".join(missing_fields)}')
         self.host = email['host']
         self.token = email['token']
         self.sender = email['sender']

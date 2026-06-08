@@ -2,16 +2,22 @@ import logging
 from logging.handlers import TimedRotatingFileHandler,RotatingFileHandler
 import inspect
 import os
+import re
 from time import strftime
 import builtins
 from logaid.mailer import Mail
-import random
-import string
 
 email_usable = False
 logaid_has_handlers = False
+DEFAULT_LOGGER_NAME = "logaid"
+TIMED_ROTATING_WHEN_VALUES = {"S", "M", "H", "D", "midnight", "W0", "W1", "W2", "W3", "W4", "W5", "W6"}
 
 class SafeFormatter(logging.Formatter):
+    def __init__(self, *args, enable_color: bool = False, color: dict = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.enable_color = enable_color
+        self.color = color or {}
+
     def format(self, record):
         if not hasattr(record, 'fake_lineno'):
             record.fake_lineno = record.lineno
@@ -21,7 +27,25 @@ class SafeFormatter(logging.Formatter):
             record.fake_funcName = record.funcName
         if not hasattr(record, 'fake_levelname'):
             record.fake_levelname = record.levelname
-        return super().format(record)
+        result = super().format(record)
+        if not self.enable_color:
+            return result
+        level_name = str(getattr(record, 'fake_levelname', record.levelname)).upper()
+        if level_name == 'DEBUG':
+            color_txt = self.color.get('DEBUG', '') or 'gray'
+        elif level_name == 'INFO':
+            color_txt = self.color.get('INFO', '') or 'cyan'
+        elif level_name == 'SUCCESS':
+            color_txt = self.color.get('SUCCESS', '') or 'green'
+        elif level_name in ['WARNING', 'WARN']:
+            color_txt = self.color.get('WARNING', '') or self.color.get('WARN', '') or 'yellow'
+        elif level_name == 'ERROR':
+            color_txt = self.color.get('ERROR', '') or 'red'
+        elif level_name in ['FATAL', 'CRITICAL']:
+            color_txt = self.color.get('FATAL', '') or self.color.get('CRITICAL', '') or 'violet'
+        else:
+            color_txt = None
+        return put_colour(result, color_txt)
 
 
 def put_colour(txt, color=None):
@@ -48,14 +72,107 @@ def put_colour(txt, color=None):
     return result
 
 
+def normalize_rotating(rotating):
+    if rotating is None:
+        return ''
+    if not isinstance(rotating, str):
+        raise TypeError('rotating must be a string.')
+    rotating = rotating.strip()
+    if rotating == '':
+        return ''
+    if rotating in ['day', 'size', 'day-size', 'midnight']:
+        return rotating
+    rotating_upper = rotating.upper()
+    if rotating_upper in ['S', 'M', 'H', 'D', 'W0', 'W1', 'W2', 'W3', 'W4', 'W5', 'W6']:
+        return rotating_upper
+    allow_values = ['day', 'size', 'day-size', 'midnight', 'S', 'M', 'H', 'D', 'W0', 'W1', 'W2', 'W3', 'W4', 'W5', 'W6']
+    raise ValueError(f'Invalid rotating value: {rotating}. Allowed values: {", ".join(allow_values)}')
+
+
+def set_timed_handler_suffix(file_handler: TimedRotatingFileHandler, when: str):
+    when = normalize_rotating(when)
+    if when == 'S':
+        file_handler.suffix = "%Y-%m-%d_%H-%M-%S"
+        file_handler.extMatch = re.compile(r"(?<!\d)\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(?!\d)", re.ASCII)
+    elif when == 'M':
+        file_handler.suffix = "%Y-%m-%d_%H-%M"
+        file_handler.extMatch = re.compile(r"(?<!\d)\d{4}-\d{2}-\d{2}_\d{2}-\d{2}(?!\d)", re.ASCII)
+    elif when == 'H':
+        file_handler.suffix = "%Y-%m-%d_%H"
+        file_handler.extMatch = re.compile(r"(?<!\d)\d{4}-\d{2}-\d{2}_\d{2}(?!\d)", re.ASCII)
+    else:
+        file_handler.suffix = "%Y-%m-%d"
+        file_handler.extMatch = re.compile(r"(?<!\d)\d{4}-\d{2}-\d{2}(?!\d)", re.ASCII)
+
+
+def build_timed_namer(base_filename: str):
+    base_no_log = base_filename[:-4] if base_filename.lower().endswith('.log') else base_filename
+    prefix = base_filename + "."
+
+    def _namer(default_name: str):
+        if default_name.startswith(prefix):
+            return base_no_log + "." + default_name[len(prefix):] + ".log"
+        return default_name
+
+    return _namer
+
+
+def build_file_handler(filename:str, save_mode:str='a', rotating:str='',
+                       backupCount:int=30, maxBytes:int=50 * 1024 * 1024):
+    rotating = normalize_rotating(rotating)
+    if rotating == 'day':
+        file_handler = TimedRotatingFileHandler(
+            filename=filename,
+            when="midnight",
+            interval=1,
+            backupCount=backupCount,
+            encoding="utf-8"
+        )
+        set_timed_handler_suffix(file_handler, "midnight")
+        file_handler.namer = build_timed_namer(file_handler.baseFilename)
+        return file_handler
+    if rotating == 'size':
+        return RotatingFileHandler(
+            filename=filename,
+            mode=save_mode,
+            maxBytes=maxBytes,
+            backupCount=backupCount,
+            encoding="utf-8"
+        )
+    if rotating == 'day-size':
+        file_handler = TimedRotatingFileHandler(
+            filename=filename,
+            when="midnight",
+            interval=1,
+            backupCount=backupCount,
+            encoding="utf-8"
+        )
+        set_timed_handler_suffix(file_handler, "midnight")
+        file_handler.namer = build_timed_namer(file_handler.baseFilename)
+        file_handler.maxBytes = maxBytes
+        return file_handler
+
+    if rotating in TIMED_ROTATING_WHEN_VALUES:
+        file_handler = TimedRotatingFileHandler(
+            filename=filename,
+            when=rotating,
+            interval=1,
+            backupCount=backupCount,
+            encoding="utf-8"
+        )
+        set_timed_handler_suffix(file_handler, rotating)
+        file_handler.namer = build_timed_namer(file_handler.baseFilename)
+        return file_handler
+    return logging.FileHandler(filename, save_mode, encoding='utf-8')
+
+
 
 def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode='a',format=''
                      ,show=True,only_msg=False,color={},emailer={}
                      ,rotating:str='',backupCount:int=30,maxBytes:int=50 * 1024 * 1024):
     global logaid_has_handlers
 
-    random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-    logger_name = name or func.__name__ + random_str
+    logger_name = name or DEFAULT_LOGGER_NAME
     aid_logger = logging.getLogger(logger_name)
     aid_logger.propagate = False
     aid_logger.setLevel(level)
@@ -63,43 +180,20 @@ def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode=
         logaid_has_handlers = True
         aid_logger.handlers.clear()
         format_txt = '[%(asctime)s] File "%(fake_pathname)s", line %(fake_lineno)d, func %(fake_funcName)s, level %(fake_levelname)s: %(message)s'
-        format_txt = put_colour(format_txt, color='default')
         if filename:
-            formatter = SafeFormatter(format_txt[5:-4])
-            if rotating == 'day':
-                file_handler = TimedRotatingFileHandler(
-                    filename=filename,
-                    when="midnight",
-                    interval=1,
-                    backupCount=backupCount,
-                    encoding="utf-8"
-                )
-                file_handler.suffix = "%Y-%m-%d.log"
-            elif rotating == 'size':
-                file_handler = RotatingFileHandler(
-                    filename=filename,
-                    mode=save_mode,
-                    maxBytes=maxBytes,
-                    backupCount=backupCount,
-                    encoding="utf-8"
-                )
-            elif rotating == 'day-size':
-                file_handler = TimedRotatingFileHandler(
-                    filename=filename,
-                    when="midnight",
-                    interval=1,
-                    backupCount=backupCount,
-                    encoding="utf-8"
-                )
-                file_handler.suffix = "%Y-%m-%d.log"
-                file_handler.maxBytes = maxBytes
-            else:
-                file_handler = logging.FileHandler(filename,save_mode, encoding='utf-8')
+            formatter = SafeFormatter(format_txt, enable_color=False, color=color)
+            file_handler = build_file_handler(
+                filename=filename,
+                save_mode=save_mode,
+                rotating=rotating,
+                backupCount=backupCount,
+                maxBytes=maxBytes
+            )
 
             file_handler.setFormatter(formatter)
             aid_logger.addHandler(file_handler)
         if show:
-            formatter = SafeFormatter(format_txt)
+            formatter = SafeFormatter(format_txt, enable_color=True, color=color)
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)
             aid_logger.addHandler(console_handler)
@@ -127,45 +221,17 @@ def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode=
                 format_txt = f'%(message)s'
 
         func_dict = {'success':'SUCCESS','warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
-        if name:
-            color_txt = 'default'
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
-        elif func.__name__ == 'debug':
-            color_txt = color.get('DEBUG','') or 'gray'
-            format_txt = put_colour(format_txt,color=color_txt)
-            args = (' '.join([put_colour(str(i),color=color_txt) if not filename else str(i) for i in args]),)
-        elif func.__name__ == 'info':
-            color_txt = color.get('INFO','') or 'cyan'
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
-        elif func.__name__ == 'success':
-            color_txt = color.get('SUCCESS','') or 'green'
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
-        elif func.__name__ == 'warning':
-            color_txt = color.get('WARNING','') or color.get('WARN','') or 'yellow'
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
-        elif func.__name__ == 'error':
-            color_txt = color.get('ERROR','') or 'red'
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
-        elif func.__name__ in ['fatal','critical']:
-            color_txt = color.get('FATAL','') or color.get('CRITICAL','') or 'violet'
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
-        else:
-            color_txt = None
-            format_txt = put_colour(format_txt, color=color_txt)
-            args = (' '.join([put_colour(str(i), color=color_txt) if not filename else str(i) for i in args]),)
+        args = (' '.join([str(i) for i in args]),)
 
         if emailer:
             if func_dict.get(func.__name__,'') in emailer.get('open_level',[]):
                 emailer_dict = dict(emailer)
-                emailer_dict['subject'] = f'[{func.__name__}] ' + emailer_dict['subject']
-                e_mailer = Mail(emailer_dict)
-                err_bool, err_txt = e_mailer.send(args[0][5:-4])
+                emailer_dict['subject'] = f'[{func.__name__}] ' + str(emailer_dict.get('subject', ''))
+                try:
+                    e_mailer = Mail(emailer_dict)
+                    err_bool, err_txt = e_mailer.send(args[0][5:-4])
+                except Exception as e:
+                    err_bool, err_txt = False, e
                 if not err_bool:
                     args = (args[0] + ' [ERROR] Send LogAid mail failed. ' + str(err_txt),)
                 else:
@@ -173,13 +239,19 @@ def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode=
         if not aid_logger.hasHandlers() or not logaid_has_handlers:
             logaid_has_handlers = True
             if show:
-                formatter = SafeFormatter(format_txt)
+                formatter = SafeFormatter(format_txt, enable_color=True, color=color)
                 console_handler = logging.StreamHandler()
                 console_handler.setFormatter(formatter)
                 aid_logger.addHandler(console_handler)
             if filename:
-                formatter = SafeFormatter(format_txt[5:-4])
-                file_handler = logging.FileHandler(filename,save_mode,encoding='utf-8')
+                formatter = SafeFormatter(format_txt, enable_color=False, color=color)
+                file_handler = build_file_handler(
+                    filename=filename,
+                    save_mode=save_mode,
+                    rotating=rotating,
+                    backupCount=backupCount,
+                    maxBytes=maxBytes
+                )
                 file_handler.setFormatter(formatter)
                 aid_logger.addHandler(file_handler)
 
@@ -289,8 +361,11 @@ def init(name:str='',level:str='DEBUG',filename:str='',save=False,save_mode:str=
         if not email_usable:
             error(*args, ' [ERROR] mail func not usable,please set init param "email".')
             return
-        emailer = Mail(emailer_copy)
-        err_bool, err_txt = emailer.send(args[0])
+        try:
+            emailer = Mail(emailer_copy)
+            err_bool, err_txt = emailer.send(args[0])
+        except Exception as e:
+            err_bool, err_txt = False, e
 
         if not err_bool:
             args = args[0]
