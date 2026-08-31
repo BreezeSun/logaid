@@ -39,7 +39,7 @@ class SafeFormatter(logging.Formatter):
             color_txt = self.color.get('SUCCESS', '') or 'green'
         elif level_name in ['WARNING', 'WARN']:
             color_txt = self.color.get('WARNING', '') or self.color.get('WARN', '') or 'yellow'
-        elif level_name == 'ERROR':
+        elif level_name in ['ERROR','EXCEPTION']:
             color_txt = self.color.get('ERROR', '') or 'red'
         elif level_name in ['FATAL', 'CRITICAL']:
             color_txt = self.color.get('FATAL', '') or self.color.get('CRITICAL', '') or 'violet'
@@ -220,7 +220,7 @@ def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode=
             if only_msg:
                 format_txt = f'%(message)s'
 
-        func_dict = {'success':'SUCCESS','warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL'}
+        func_dict = {'success':'SUCCESS','warning':'WARNING','error':'ERROR','fatal':'FATAL','critical':'CRITICAL','exception':'EXCEPTION'}
         args = (' '.join([str(i) for i in args]),)
 
         if emailer:
@@ -272,11 +272,15 @@ def add_context_info(func,name='',level=logging.DEBUG,filename:str='',save_mode=
             aid_func = aid_logger.fatal
         elif 'critical' in func.__name__:
             aid_func = aid_logger.critical
+        elif 'exception' in func.__name__:
+            aid_func = aid_logger.exception
         else:
             aid_func = func
         extra = {"fake_lineno": lineno, "fake_funcName": func_name, "fake_pathname": co_filename}
         if 'success' in func.__name__:
             extra.update({'fake_levelname':'SUCCESS'})
+        elif 'exception' in func.__name__:
+            extra.update({'fake_levelname': 'EXCEPTION'})
 
         return aid_func(*args,extra=extra, **kwargs)
     return wrapper
@@ -290,6 +294,7 @@ success = add_context_info(success)
 error = add_context_info(logging.error)
 fatal = add_context_info(logging.fatal)
 critical = add_context_info(logging.critical)
+exception = add_context_info(logging.exception)
 
 def email(*args):
     if not email_usable:
@@ -335,6 +340,8 @@ def init(name:str='',level:str='DEBUG',filename:str='',save=False,save_mode:str=
         log_level = logging.FATAL
     elif level == 'CRITICAL':
         log_level = logging.CRITICAL
+    elif level == 'EXCEPTION':
+        log_level = logging.exception
     else:
         log_level = logging.INFO
     if save:
@@ -354,6 +361,8 @@ def init(name:str='',level:str='DEBUG',filename:str='',save=False,save_mode:str=
     error = add_context_info(logging.error,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
     fatal = add_context_info(logging.fatal,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
     critical = add_context_info(logging.critical,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+    exception = add_context_info(logging.exception,name, log_level,filename,save_mode,format,show,only_msg,color,emailer_copy,rotating,backupCount,maxBytes)
+
     if print_pro:
         builtins.print = info
 
